@@ -2,12 +2,16 @@
 
 # Assisted Living Center Voice Story Sharing System
 
-A voice-to-text platform that helps new residents of assisted living centers share their life stories.
-![interface1](interface1.png)
-![interface2](interface2.png)
 ## Project Overview
 
 This system allows elderly users to share their life stories through a simple voice interface. The system transcribes the stories into text and selectively shares them with staff and family, supporting emotional care and personalized interaction.
+A voice-to-text platform that helps new residents of assisted living centers share their life stories.
+
+I designed the interface for new members. Using process: first choose the story category, then start recording, you can cancel or save during the recording process. Once saved, you can preview it or delete it if you think it's not perfect. After you think it's okay, you can add it to the transcription list and start transcribing.
+
+![interface1](interface1.png)
+![interface2](interface2.png)
+
 
 ## Technology Stack
 

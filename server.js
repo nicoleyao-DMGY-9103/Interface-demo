@@ -11,7 +11,6 @@ const app = express();
 const port = 3000;
 
 // Directly set Hugging Face API key
-// For security, this should be stored in environment variables
 const HF_API_KEY = process.env.HF_API_KEY || "YOUR_API_KEY_HERE";
 
 // Configure file storage

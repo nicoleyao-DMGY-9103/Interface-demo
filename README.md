@@ -22,8 +22,7 @@ This system allows elderly users to share their life stories through a simple vo
 - Convert WebM format to WAV format on the server
 - Use the Whisper-large-v3 model for speech recognition
 - Display recognition results on the page
-- Save and categorize stories
-- Control story access permissions
+
 
 ## Input Interface
 

@@ -53,8 +53,8 @@ app.use(express.static('public'));
 
 // Test endpoint to check if the server is working properly
 app.get('/api/test', (req, res) => {
-    console.log('收到测试请求');
-    res.json({ status: 'ok', message: '服务器正常工作' });
+    console.log('Test request received');
+    res.json({ status: 'ok', message: 'Server is working properly' });
 });
 
 // Convert WebM audio to WAV format (more compatible format)
@@ -62,16 +62,16 @@ async function convertToWav(inputPath) {
     const outputPath = inputPath + '.wav';
     
     return new Promise((resolve, reject) => {
-        console.log(`转换音频: ${inputPath} -> ${outputPath}`);
+        console.log(`Converting audio: ${inputPath} -> ${outputPath}`);
         
         // Convert to 16kHz, 16bit, mono WAV format
         exec(`ffmpeg -i "${inputPath}" -ar 16000 -ac 1 -c:a pcm_s16le "${outputPath}"`, (error) => {
             if (error) {
-                console.error('转换音频失败:', error);
+                console.error('Audio conversion failed:', error);
                 reject(error);
                 return;
             }
-            console.log('音频转换成功');
+            console.log('Audio conversion successful');
             resolve(outputPath);
         });
     });
@@ -83,34 +83,34 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     
     try {
         if (!req.file) {
-            console.log('未收到音频文件');
-            return res.status(400).json({ error: '没有收到音频文件' });
+            console.log('No audio file received');
+            return res.status(400).json({ error: 'No audio file received' });
         }
 
-        console.log('收到音频文件:', req.file);
-        console.log('文件类型:', req.file.mimetype);
-        console.log('文件大小:', req.file.size, 'bytes');
+        console.log('Audio file received:', req.file);
+        console.log('File type:', req.file.mimetype);
+        console.log('File size:', req.file.size, 'bytes');
 
         const inputPath = req.file.path;
         
         // Convert to WAV format
         try {
             wavFilePath = await convertToWav(inputPath);
-            console.log('成功转换为WAV格式:', wavFilePath);
+            console.log('Successfully converted to WAV format:', wavFilePath);
         } catch (conversionError) {
-            console.error('音频转换失败:', conversionError);
-            throw new Error('音频格式转换失败');
+            console.error('Audio conversion failed:', conversionError);
+            throw new Error('Audio format conversion failed');
         }
         
-        console.log('准备调用Hugging Face API...');
+        console.log('Preparing to call Hugging Face API...');
         
         if (!fs.existsSync(wavFilePath)) {
-            throw new Error(`WAV文件不存在: ${wavFilePath}`);
+            throw new Error(`WAV file does not exist: ${wavFilePath}`);
         }
         
         // Directly read the file as binary data
         const audioData = fs.readFileSync(wavFilePath);
-        console.log('WAV文件大小:', audioData.length, 'bytes');
+        console.log('WAV file size:', audioData.length, 'bytes');
         
         // Use direct API call method to send binary data
         const response = await axios({
@@ -125,11 +125,11 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
             maxBodyLength: Infinity
         });
         
-        console.log('API调用成功，状态码:', response.status);
-        console.log('响应数据:', response.data);
+        console.log('API call successful, status code:', response.status);
+        console.log('Response data:', response.data);
 
         if (!response.data || !response.data.text) {
-            throw new Error('API返回的响应无效');
+            throw new Error('Invalid response from API');
         }
 
         // Return conversion result
@@ -140,11 +140,11 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
             timestamp: new Date().toISOString()
         });
     } catch (error) {
-        console.error('详细错误信息:', error);
+        console.error('Detailed error information:', error);
         
         // Return more detailed error information
         res.status(500).json({ 
-            error: '语音转文字过程中发生错误',
+            error: 'An error occurred during speech-to-text conversion',
             details: error.message,
             stack: error.stack
         });
@@ -153,14 +153,14 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
         try {
             if (req.file && fs.existsSync(req.file.path)) {
                 fs.unlinkSync(req.file.path);
-                console.log('清理原始文件:', req.file.path);
+                console.log('Cleaned up original file:', req.file.path);
             }
             if (wavFilePath && fs.existsSync(wavFilePath)) {
                 fs.unlinkSync(wavFilePath);
-                console.log('清理WAV文件:', wavFilePath);
+                console.log('Cleaned up WAV file:', wavFilePath);
             }
         } catch (cleanupError) {
-            console.error('清理文件失败:', cleanupError);
+            console.error('Failed to clean up files:', cleanupError);
         }
     }
 });
@@ -168,14 +168,14 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 // Check if the port is occupied, if so, use another port
 function startServer(port) {
     const server = app.listen(port, () => {
-        console.log(`服务器运行在 http://localhost:${port}`);
-        console.log(`请在浏览器中访问 http://localhost:${port} 来使用应用`);
+        console.log(`Server running at http://localhost:${port}`);
+        console.log(`Please visit http://localhost:${port} in your browser to use the application`);
     }).on('error', (err) => {
         if (err.code === 'EADDRINUSE') {
-            console.warn(`端口 ${port} 已被占用，尝试使用端口 ${port + 1}`);
+            console.warn(`Port ${port} is already in use, trying port ${port + 1}`);
             startServer(port + 1);
         } else {
-            console.error('启动服务器出错:', err);
+            console.error('Error starting server:', err);
         }
     });
 }

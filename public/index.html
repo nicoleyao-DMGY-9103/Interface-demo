@@ -53,7 +53,7 @@
         
         async function toggleRecording() {
             if (!recording) {
-                // 开始录音
+                // Start recording
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
@@ -74,7 +74,7 @@
                     statusElement.textContent = 'Cannot access microphone, please ensure permission is granted';
                 }
             } else {
-                // 停止录音
+                // Stop recording
                 mediaRecorder.stop();
                 recording = false;
                 recordButton.textContent = 'Start Recording';
@@ -83,10 +83,10 @@
         }
         
         async function convertSpeechToText() {
-            // 创建音频Blob，可以选择不同的格式
+            // Create audio Blob, different formats can be selected
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             
-            // 创建表单数据以发送音频
+            // Create form data to send audio
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
             
@@ -94,36 +94,36 @@
             resultElement.innerHTML = '<span class="loading">Processing...</span>';
             
             try {
-                // 发送到我们的后端，后端将与Hugging Face API交互
+                // Send to our backend, which will interact with the Hugging Face API
                 const response = await fetch('/api/transcribe', {
                     method: 'POST',
                     body: formData
                 });
                 
-                console.log('服务器响应状态:', response.status);
+                console.log('Server response status:', response.status);
                 
-                // 检查响应状态
+                // Check response status
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('服务器错误:', errorText);
-                    throw new Error(`服务器返回错误: ${response.status} ${response.statusText}`);
+                    console.error('Server error:', errorText);
+                    throw new Error(`Server returned error: ${response.status} ${response.statusText}`);
                 }
                 
-                // 检查响应内容类型
+                // Check response content type
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     const text = await response.text();
-                    console.error('返回的不是JSON数据:', text);
-                    throw new Error('服务器返回的不是JSON数据');
+                    console.error('Response is not JSON data:', text);
+                    throw new Error('Server did not return JSON data');
                 }
                 
-                // 尝试解析JSON
+                // Try to parse JSON
                 let data;
                 try {
                     data = await response.json();
                 } catch (jsonError) {
-                    console.error('JSON解析错误:', jsonError);
-                    throw new Error('无法解析服务器响应的JSON');
+                    console.error('JSON parsing error:', jsonError);
+                    throw new Error('Unable to parse server response JSON');
                 }
                 
                 if (data.error) {

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Recording to Text - Hugging Face Whisper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        #status {
+            margin: 10px 0;
+            font-style: italic;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            min-height: 100px;
+        }
+        .loading {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Voice Recording to Text</h1>
+    <button id="recordButton">Start Recording</button>
+    <div id="status">Ready</div>
+    <div>
+        <h3>Conversion Result:</h3>
+        <div id="result">The converted text will be displayed here</div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let recording = false;
+        
+        const recordButton = document.getElementById('recordButton');
+        const statusElement = document.getElementById('status');
+        const resultElement = document.getElementById('result');
+        
+        recordButton.addEventListener('click', toggleRecording);
+        
+        async function toggleRecording() {
+            if (!recording) {
+                // 开始录音
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+                    
+                    mediaRecorder.addEventListener('stop', convertSpeechToText);
+                    
+                    mediaRecorder.start();
+                    recording = true;
+                    recordButton.textContent = 'Stop Recording';
+                    statusElement.textContent = 'Recording...';
+                } catch (error) {
+                    console.error('Failed to get microphone permission:', error);
+                    statusElement.textContent = 'Cannot access microphone, please ensure permission is granted';
+                }
+            } else {
+                // 停止录音
+                mediaRecorder.stop();
+                recording = false;
+                recordButton.textContent = 'Start Recording';
+                statusElement.textContent = 'Recording completed, processing...';
+            }
+        }
+        
+        async function convertSpeechToText() {
+            // 创建音频Blob，可以选择不同的格式
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            
+            // 创建表单数据以发送音频
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            
+            statusElement.textContent = 'Uploading and converting to text...';
+            resultElement.innerHTML = '<span class="loading">Processing...</span>';
+            
+            try {
+                // 发送到我们的后端，后端将与Hugging Face API交互
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('服务器响应状态:', response.status);
+                
+                // 检查响应状态
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('服务器错误:', errorText);
+                    throw new Error(`服务器返回错误: ${response.status} ${response.statusText}`);
+                }
+                
+                // 检查响应内容类型
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('返回的不是JSON数据:', text);
+                    throw new Error('服务器返回的不是JSON数据');
+                }
+                
+                // 尝试解析JSON
+                let data;
+                try {
+                    data = await response.json();
+                } catch (jsonError) {
+                    console.error('JSON解析错误:', jsonError);
+                    throw new Error('无法解析服务器响应的JSON');
+                }
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                statusElement.textContent = 'Conversion complete!';
+                resultElement.textContent = data.text;
+            } catch (error) {
+                console.error('Conversion failed:', error);
+                statusElement.textContent = 'Error occurred during upload or conversion';
+                resultElement.innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

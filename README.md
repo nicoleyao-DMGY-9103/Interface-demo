@@ -9,9 +9,7 @@ A voice-to-text platform that helps new residents of assisted living centers sha
 
 I designed the interface for new members. Using process: first choose the story category, then start recording, you can cancel or save during the recording process. Once saved, you can preview it or delete it if you think it's not perfect. After you think it's okay, you can add it to the transcription list and start transcribing.
 
-![interface1](interface1.png)
-![interface2](interface2.png)
-
+![interface](initial interface.png)
 
 ## Technology Stack
 

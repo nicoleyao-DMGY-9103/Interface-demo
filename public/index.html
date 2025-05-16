@@ -3,56 +3,544 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Recording to Text - Hugging Face Whisper</title>
+    <title>Elderly Life Story Sharing System - Speech to Text</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
+            margin: 0;
+            padding: 0;
+            background-color: #f6ecc9;
+            color: #202020;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .left-half, .right-half {
+            flex: 1;
             padding: 20px;
+            position: relative;
         }
-        button {
+        
+        .left-half {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #ddd;
+        }
+        
+        .cover-image {
+            max-width: 90%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .cover-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .upload-button, .generate-cover-btn {
             padding: 10px 15px;
-            margin: 10px 0;
+            color: #202020;
+            border: none;
+            border-radius: 10px;
             cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+            max-width: 200px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-        #status {
+        
+        .upload-button {
+            background-color: rgba(247, 212, 16, 0.5);
+        }
+        
+        .upload-button:hover {
+            background-color: rgba(247, 212, 16, 0.7);
+        }
+        
+        .generate-cover-btn {
+            background-color: rgba(247, 145, 16, 0.5);
+        }
+        
+        .generate-cover-btn:hover {
+            background-color: rgba(247, 145, 16, 0.7);
+        }
+        
+        .right-half {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .status {
+            text-align: center;
             margin: 10px 0;
             font-style: italic;
+            color: #202020;
         }
-        #result {
+        
+        .recording-active {
+            color: #F7d44c;
+        }
+        
+        .recording-animation {
+            width: 20px;
+            height: 20px;
+            background-color: #f7d44c;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: pulse 1s infinite ease-in-out;
+            display: none;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .timer {
+            background-color: #414141;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 16px;
+            visibility: hidden;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        button {
+            padding: 15px 25px;
+            background-color: rgba(247, 212, 16, 0.5);
+            color: #202020;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+            transition: background-color 0.3s;
+            max-width: 200px;
+        }
+        
+        button:hover {
+            background-color: rgba(247, 212, 16, 0.7);
+        }
+        
+        button:disabled {
+            background-color: rgba(220, 220, 220, 0.5);
+            cursor: not-allowed;
+        }
+        
+        .result-box {
+            background-color: #eb7a53;
+            border-radius: 10px;
+            padding: 20px;
             margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            min-height: 100px;
+            width: 100%;
+            max-width: 400px;
+            height: 400px;
+            overflow-y: auto;
+            color: #000;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
+        
+        .category-selection {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .category-button {
+            padding: 8px 15px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #202020;
+            border: 1px solid #ffffff;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        .category-button.active {
+            background-color: rgba(247, 212, 16, 0.7);
+            color: #202020;
+        }
+        
+        .add-category-button {
+            padding: 8px 15px;
+            background-color: rgba(247, 145, 16, 0.5);
+            color: #202020;
+            border: 1px solid #ffffff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-category-button:hover {
+            background-color: rgba(247, 145, 16, 0.7);
+        }
+        
+        .custom-category-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            display: none;
+        }
+        
+        .dialog-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dialog-content h3 {
+            margin-top: 0;
+            color: #202020;
+        }
+        
+        .dialog-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .dialog-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .cancel-button {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        
+        .add-button {
+            background-color: rgba(247, 212, 16, 0.7);
+            color: #202020;
+        }
+        
         .loading {
-            color: #666;
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            color: #4CAF50;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 2s linear infinite;
+            margin: 10px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .message {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .display-page-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: rgba(247, 212, 16, 0.7);
+            color: #202020;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .display-page-btn:hover {
+            background-color: rgba(247, 212, 16, 0.9);
+        }
+        
+        .cover-generating {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .cover-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #F7d44c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-    <h1>Voice Recording to Text</h1>
-    <button id="recordButton">Start Recording</button>
-    <div id="status">Ready</div>
-    <div>
-        <h3>Conversion Result:</h3>
-        <div id="result">The converted text will be displayed here</div>
+    <div class="container">
+        <div class="left-half">
+            <img id="coverImage" src="../cover.png" alt="Cover Image" class="cover-image">
+            <div class="cover-generating" id="coverGenerating">
+                <div>Generating cover image...</div>
+                <div class="cover-spinner"></div>
+            </div>
+            <input type="file" id="coverUpload" accept="image/*" style="display: none;">
+            <div class="cover-buttons">
+                <button class="upload-button" onclick="document.getElementById('coverUpload').click()">Upload Cover Image</button>
+                <button class="generate-cover-btn" id="generateCoverBtn">Generate Cover From Memory</button>
+            </div>
+        </div>
+        
+        <div class="right-half">
+            <h1>Let's Create Your Story!</h1>
+            
+            <div class="category-selection">
+                <button class="category-button" data-category="love">Love</button>
+                <button class="category-button" data-category="travel">Travel</button>
+                <button class="category-button" data-category="adventure">Adventure</button>
+                <button class="category-button" data-category="childhood">Childhood</button>
+                <button class="add-category-button">+</button>
+            </div>
+            
+            <div class="status">Ready, click to start recording</div>
+            <div class="recording-animation" id="recordingAnimation"></div>
+            <div class="timer" id="timer">00:00</div>
+            
+            <div class="controls">
+                <div class="control-row">
+                    <button id="recordButton">Start Recording</button>
+                </div>
+                <div class="control-row">
+                    <button id="transcribeButton" disabled>Transcribe Audio</button>
+                    <button id="saveButton" disabled>Save Story</button>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div>Transcribing...</div>
+                <div class="loading-spinner"></div>
+            </div>
+            
+            <div class="message" id="message"></div>
+            
+            <div class="result-box" id="result">Transcription results will be displayed here</div>
+        </div>
     </div>
-
+    
+    <a href="display.html" class="display-page-btn">Story Display</a>
+    
+    <div class="custom-category-dialog" id="customCategoryDialog">
+        <div class="dialog-content">
+            <h3>Add New Category</h3>
+            <input type="text" id="newCategoryName" placeholder="Enter category name">
+            <div class="dialog-buttons">
+                <button class="cancel-button dialog-button">Cancel</button>
+                <button class="add-button dialog-button">Add</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
+        // Global variables
         let mediaRecorder;
         let audioChunks = [];
-        let recording = false;
+        let isRecording = false;
+        let recordingStartTime = 0;
+        let timerInterval;
+        let selectedCategory = null;
         
+        // DOM elements
         const recordButton = document.getElementById('recordButton');
-        const statusElement = document.getElementById('status');
+        const transcribeButton = document.getElementById('transcribeButton');
+        const saveButton = document.getElementById('saveButton');
+        const statusElement = document.querySelector('.status');
         const resultElement = document.getElementById('result');
+        const timerElement = document.getElementById('timer');
+        const recordingAnimation = document.getElementById('recordingAnimation');
+        const coverUpload = document.getElementById('coverUpload');
+        const coverImage = document.getElementById('coverImage');
+        const loadingElement = document.getElementById('loading');
+        const messageElement = document.getElementById('message');
+        const categoryButtons = document.querySelectorAll('.category-button');
+        const customCategoryDialog = document.getElementById('customCategoryDialog');
         
-        recordButton.addEventListener('click', toggleRecording);
+        // Maximum recording time 3 minutes (in milliseconds)
+        const MAX_RECORDING_TIME = 180000;
         
+        // Initialize event listeners
+        function init() {
+            recordButton.addEventListener('click', toggleRecording);
+            transcribeButton.addEventListener('click', transcribeAudio);
+            saveButton.addEventListener('click', saveStory);
+            
+            // Generate cover image
+            document.getElementById('generateCoverBtn').addEventListener('click', generateCoverImage);
+            
+            // Upload cover image
+            coverUpload.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        coverImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    showMessage('Please upload a valid image file', 'error');
+                }
+            });
+            
+            // Category selection
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedCategory = this.dataset.category;
+                });
+            });
+            
+            // Add category button
+            const addCategoryButton = document.querySelector('.add-category-button');
+            addCategoryButton.addEventListener('click', function() {
+                customCategoryDialog.style.display = 'flex';
+            });
+            
+            // Dialog buttons
+            const cancelButton = document.querySelector('.cancel-button');
+            const addButton = document.querySelector('.add-button');
+            const newCategoryInput = document.getElementById('newCategoryName');
+            
+            cancelButton.addEventListener('click', function() {
+                customCategoryDialog.style.display = 'none';
+                newCategoryInput.value = '';
+            });
+            
+            addButton.addEventListener('click', function() {
+                const newCategoryName = newCategoryInput.value.trim();
+                if (newCategoryName) {
+                    addCategory(newCategoryName);
+                    customCategoryDialog.style.display = 'none';
+                }
+            });
+            
+            // 添加回车键事件监听
+            newCategoryInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    const newCategoryName = newCategoryInput.value.trim();
+                    if (newCategoryName) {
+                        addCategory(newCategoryName);
+                        customCategoryDialog.style.display = 'none';
+                    }
+                    event.preventDefault();
+                }
+            });
+        }
+        
+        // Toggle recording state
         async function toggleRecording() {
-            if (!recording) {
+            if (!selectedCategory) {
+                showMessage('Please select a story category first', 'error');
+                return;
+            }
+            
+            if (!isRecording) {
                 // Start recording
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -63,81 +551,242 @@
                         audioChunks.push(event.data);
                     });
                     
-                    mediaRecorder.addEventListener('stop', convertSpeechToText);
+                    mediaRecorder.addEventListener('stop', () => {
+                        // Handle recording stop
+                        transcribeButton.disabled = false;
+                    });
                     
                     mediaRecorder.start();
-                    recording = true;
+                    isRecording = true;
                     recordButton.textContent = 'Stop Recording';
                     statusElement.textContent = 'Recording...';
+                    statusElement.classList.add('recording-active');
+                    recordingAnimation.style.display = 'inline-block';
+                    
+                    // Start timer
+                    recordingStartTime = Date.now();
+                    timerElement.style.visibility = 'visible';
+                    timerInterval = setInterval(updateTimer, 1000);
+                    
                 } catch (error) {
                     console.error('Failed to get microphone permission:', error);
-                    statusElement.textContent = 'Cannot access microphone, please ensure permission is granted';
+                    showMessage('Cannot access microphone, please ensure permission is granted', 'error');
                 }
             } else {
                 // Stop recording
                 mediaRecorder.stop();
-                recording = false;
+                isRecording = false;
                 recordButton.textContent = 'Start Recording';
-                statusElement.textContent = 'Recording completed, processing...';
+                statusElement.textContent = 'Recording completed';
+                statusElement.classList.remove('recording-active');
+                recordingAnimation.style.display = 'none';
+                
+                // Stop timer
+                clearInterval(timerInterval);
             }
         }
         
-        async function convertSpeechToText() {
-            // Create audio Blob, different formats can be selected
+        // Update timer display
+        function updateTimer() {
+            const currentTime = Date.now();
+            const elapsedTime = currentTime - recordingStartTime;
+            
+            // If exceeding maximum recording time, automatically stop
+            if (elapsedTime >= MAX_RECORDING_TIME) {
+                toggleRecording();
+                showMessage('Maximum recording time of 3 minutes reached', 'error');
+                return;
+            }
+            
+            // Format time display
+            const seconds = Math.floor(elapsedTime / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Transcribe audio
+        function transcribeAudio() {
+            if (audioChunks.length === 0) {
+                showMessage('No recording available', 'error');
+                return;
+            }
+            
+            statusElement.textContent = 'Transcribing...';
+            transcribeButton.disabled = true;
+            loadingElement.style.display = 'block';
+            
+            // Create audio Blob
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             
-            // Create form data to send audio
+            // Create form data
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
             
-            statusElement.textContent = 'Uploading and converting to text...';
-            resultElement.innerHTML = '<span class="loading">Processing...</span>';
-            
-            try {
-                // Send to our backend, which will interact with the Hugging Face API
-                const response = await fetch('/api/transcribe', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                console.log('Server response status:', response.status);
-                
-                // Check response status
+            // Send to server
+            fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server error:', errorText);
                     throw new Error(`Server returned error: ${response.status} ${response.statusText}`);
                 }
+                return response.json();
+            })
+            .then(data => {
+                loadingElement.style.display = 'none';
                 
-                // Check response content type
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const text = await response.text();
-                    console.error('Response is not JSON data:', text);
-                    throw new Error('Server did not return JSON data');
+                if (data.text) {
+                    resultElement.textContent = data.text;
+                    statusElement.textContent = 'Transcription completed';
+                    saveButton.disabled = false;
+                    showMessage('Transcription successful!', 'success');
+                } else {
+                    showMessage('Transcription result is empty', 'error');
                 }
-                
-                // Try to parse JSON
-                let data;
-                try {
-                    data = await response.json();
-                } catch (jsonError) {
-                    console.error('JSON parsing error:', jsonError);
-                    throw new Error('Unable to parse server response JSON');
-                }
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                statusElement.textContent = 'Conversion complete!';
-                resultElement.textContent = data.text;
-            } catch (error) {
-                console.error('Conversion failed:', error);
-                statusElement.textContent = 'Error occurred during upload or conversion';
-                resultElement.innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
-            }
+            })
+            .catch(error => {
+                loadingElement.style.display = 'none';
+                statusElement.textContent = 'Transcription failed';
+                transcribeButton.disabled = false;
+                showMessage(`Transcription failed: ${error.message}`, 'error');
+                console.error('Error:', error);
+            });
         }
+        
+        // Save story
+        function saveStory() {
+            const text = resultElement.textContent;
+            if (!text || text === 'Transcription results will be displayed here') {
+                showMessage('No content to save', 'error');
+                return;
+            }
+            
+            // Here you can add logic to save transcription content to database or send to server
+            showMessage(`Story saved! Category: ${selectedCategory}`, 'success');
+            
+            // Reset interface, prepare for next recording
+            resetInterface();
+        }
+        
+        // Reset interface
+        function resetInterface() {
+            audioChunks = [];
+            resultElement.textContent = 'Transcription results will be displayed here';
+            statusElement.textContent = 'Ready, click to start recording';
+            timerElement.style.visibility = 'hidden';
+            timerElement.textContent = '00:00';
+            transcribeButton.disabled = true;
+            saveButton.disabled = true;
+        }
+        
+        // Show message
+        function showMessage(text, type) {
+            messageElement.textContent = text;
+            messageElement.className = 'message';
+            messageElement.classList.add(type);
+            messageElement.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Generate AI cover image based on transcription or story category
+        function generateCoverImage() {
+            const coverGenerating = document.getElementById('coverGenerating');
+            
+            // Get text to base the image on
+            let promptText = '';
+            
+            if (resultElement.textContent && resultElement.textContent !== 'Transcription results will be displayed here') {
+                // Use transcription text if available
+                promptText = resultElement.textContent;
+            } else if (selectedCategory) {
+                // Use selected category if no transcription
+                const categoryPrompts = {
+                    'love': 'a loving elderly couple sitting together in a garden',
+                    'travel': 'an elderly person looking at a world map with travel memorabilia',
+                    'adventure': 'an elderly person with hiking gear looking at mountains',
+                    'childhood': 'old black and white photographs and childhood toys'
+                };
+                promptText = categoryPrompts[selectedCategory] || `memories related to ${selectedCategory}`;
+            } else {
+                showMessage('Please select a category or record a story first', 'error');
+                return;
+            }
+            
+            // Show generating indicator
+            coverGenerating.style.display = 'flex';
+            
+            // Simulate image generation with a delay
+            // In a real application, this would call an API to generate the image
+            setTimeout(() => {
+                // For demo purposes, set image based on selected category
+                if (selectedCategory === 'love') {
+                    coverImage.src = '../love.png'; // Use love.png for the love category
+                } else {
+                    // For standard categories, use the existing numbered background images
+                    const standardCategories = ['love', 'travel', 'adventure', 'childhood'];
+                    if (standardCategories.includes(selectedCategory)) {
+                        const imageIndex = standardCategories.indexOf(selectedCategory);
+                        coverImage.src = `../b${imageIndex + 1}.png`;
+                    } else {
+                        // For custom categories, pick a random background
+                        const randomIndex = Math.floor(Math.random() * 4) + 1;
+                        coverImage.src = `../b${randomIndex}.png`;
+                    }
+                }
+                
+                coverGenerating.style.display = 'none';
+                
+                showMessage('Cover image generated successfully!', 'success');
+            }, 3000);
+        }
+        
+        // Add new category
+        function addCategory(newCategoryName) {
+            // 清空输入框
+            document.getElementById('newCategoryName').value = '';
+            
+            // 检查类别名称是否已存在
+            const existingCategories = Array.from(document.querySelectorAll('.category-button')).map(btn => btn.dataset.category);
+            const categoryId = newCategoryName.toLowerCase().replace(/\s+/g, '-');
+            
+            if (existingCategories.includes(categoryId)) {
+                showMessage(`Category "${newCategoryName}" already exists`, 'error');
+                return;
+            }
+            
+            // 创建新的类别按钮
+            const newCategoryButton = document.createElement('button');
+            newCategoryButton.className = 'category-button';
+            newCategoryButton.dataset.category = categoryId;
+            newCategoryButton.textContent = newCategoryName;
+            
+            // 添加类别按钮到DOM中，放在+按钮之前
+            const addButton = document.querySelector('.add-category-button');
+            const categorySelection = document.querySelector('.category-selection');
+            categorySelection.insertBefore(newCategoryButton, addButton);
+            
+            // 为新按钮添加点击事件监听器
+            newCategoryButton.addEventListener('click', function() {
+                document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                selectedCategory = this.dataset.category;
+            });
+            
+            // 显示成功消息
+            showMessage(`New category "${newCategoryName}" added!`, 'success');
+            
+            // 自动选择新创建的类别
+            newCategoryButton.click();
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
